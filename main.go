@@ -60,7 +60,7 @@ func main(){
 	fileServe := http.FileServer(http.Dir("./template"))
 	http.Handle("/", fileServe)
 	http.Handle("/", enableCORS(fileServe))
-	http.HandleFunc("/convert", processText)
+	http.Handle("/convert", enableCORS(http.HandlerFunc(processText)))
 	fmt.Println("Iniciando o servido na porta 8080")
 	http.ListenAndServe(":8080", nil)
 }
