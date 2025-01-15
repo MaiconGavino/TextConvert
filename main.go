@@ -8,6 +8,20 @@ import (
 	"unicode"
 )
 
+func enableCORS(next http.Handler) http.Handler{
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){
+		w.Header().Set("Access-Control-Allow-Origin", "*") // Permite todas as origens
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+
+}
+
 type TextRequest struct{
 	Text string `json:"text"`
 }
@@ -45,6 +59,7 @@ func processText(w http.ResponseWriter, r *http.Request){
 func main(){
 	fileServe := http.FileServer(http.Dir("./template"))
 	http.Handle("/", fileServe)
+	http.Handle("/", enableCORS(fileServe))
 	http.HandleFunc("/convert", processText)
 	fmt.Println("Iniciando o servido na porta 8080")
 	http.ListenAndServe(":8080", nil)
