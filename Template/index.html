@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Convert</title>
+    <script src="https://unpkg.com/vue@3"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body{
+            font-family: "Noto Sans", "Arial Unicode MS", Arial, Helvetica, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div id="app" class="bg-white rounded-lg shadow-lg p-8 w-full max-w-lg">
+        <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Text Converter</h1>
+
+        <!-- Campo de Entrada -->
+        <textarea v-model="inputText" 
+                  class="w-full p-3 border rounded-lg focus:outline-none focus:ring focus:ring-blue-200"
+                  placeholder="Digite seu texto aqui..."
+                  rows="4"></textarea>
+
+        <!-- Botão Converter -->
+        <button @click="convertText"
+                :disabled="isLoading"
+                class="mt-4 w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 disabled:bg-gray-400">
+            {{ isLoading ? "Processando..." : "Converter" }}
+        </button>
+
+        <!-- Resultados -->
+        <div v-if="results.bold" class="output mt-6">
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Resultados:</h3>
+
+            <!-- Resultado em Negrito -->
+            <div class="mb-4 border rounded-lg p-4">
+                <p><strong>Negrito:</strong> <span>{{ results.bold }}</span></p>
+                <button @click="copyText(results.bold)" class="bg-blue-500 text-white py-1 px-4 rounded mt-2">
+                    Copiar
+                </button>
+            </div>
+
+            <!-- Resultado em Itálico -->
+            <div class="mb-4 border rounded-lg p-4">
+                <p><strong>Itálico:</strong> <span>{{ results.italic }}</span></p>
+                <button @click="copyText(results.italic)" class="bg-blue-500 text-white py-1 px-4 rounded mt-2">
+                    Copiar
+                </button>
+            </div>
+
+            <!-- Resultado em Negrito e Itálico -->
+            <div class="mb-4 border rounded-lg p-4">
+                <p><strong>Negrito e Itálico:</strong> <span>{{ results.boldItalic }}</span></p>
+                <button @click="copyText(results.boldItalic)" class="bg-blue-500 text-white py-1 px-4 rounded mt-2">
+                    Copiar
+                </button>
+            </div>
+
+            <!-- Resultado Sublinhado -->
+            <div class="mb-4 border rounded-lg p-4">
+                <p><strong>Sublinhado:</strong> <span>{{ results.underline || 'Nenhum resultado disponível' }}</span></p>
+                <button @click="copyText(results.underline)" 
+                        class="bg-blue-500 text-white py-1 px-4 rounded mt-2"
+                        v-if="results.underline">
+                    Copiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    inputText: "",
+                    isLoading: false, // Controle de carregamento
+                    results: {
+                        bold: "",
+                        italic: "",
+                        boldItalic: "",
+                        underline: "",
+                    },
+                };
+            },
+            methods: {
+                async convertText() {
+                    if (!this.inputText.trim()) {
+                        alert("Por favor, insira um texto.");
+                        return;
+                    }
+
+                    this.isLoading = true;
+                    try {
+                        const response = await fetch("/convert", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ text: this.inputText }),
+                        });
+
+                        if (!response.ok) {
+                            throw new Error("Erro ao processar o texto.");
+                        }
+
+                        this.results = await response.json();
+                    } catch (error) {
+                        console.error("Erro:", error);
+                        alert("Erro ao converter texto. Tente novamente.");
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+
+                copyText(text) {
+                    navigator.clipboard.writeText(text)
+                        .then(() => {
+                            alert("Texto copiado para a área de transferência!");
+                        })
+                        .catch(err => {
+                            console.error("Erro ao copiar texto:", err);
+                        });
+                },
+            },
+        });
+        app.mount("#app");
+    </script>
+</body>
+</html>
